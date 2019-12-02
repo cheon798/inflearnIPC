@@ -51,6 +51,7 @@ main(int argc, char **argv)
             close(pipefd[1]);
 
             cpid = wait(&wstatus);
+            printf("[child] PID : %d is finished. \n\n", cpid);
             break;
     }
 

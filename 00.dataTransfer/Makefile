@@ -22,7 +22,7 @@ RM 				= rm
 all :: $(APPS)
 
 $(APPS) : $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $< $(CPPFLAGS) $(LDFLAGS) $(LDLIBS)
+	$(CC) $(CFLAGS) -o $@ -g $< $(CPPFLAGS) $(LDFLAGS) $(LDLIBS)
 
 clean :
 	$(RM) -f $(APPS) $(OBJS)
