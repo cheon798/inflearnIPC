@@ -4,7 +4,7 @@ INC_DIR			?=
 LIB_DIR 		?=
 
 #### Linux domain configuration
-SRCS 			?= fifo.c
+SRCS 			?= mq_sysv.c
 OBJS 			?= $(SRCS:%.c=%.o)
 APPS 			?= $(SRCS:%.c=%)
 
