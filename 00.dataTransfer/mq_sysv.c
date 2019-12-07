@@ -20,7 +20,7 @@ typedef struct {
 static void
 print_usage(const char *idxname)
 {
-    printf("%s error. second index : (snd|rcv). third index mtype.\n", idxname);
+    printf("%s error. index : (snd[1] mtype[2] msg[3] | rcv[1] mtype[2]). \n", idxname);
 }
 
 static key_t
@@ -113,6 +113,11 @@ main(int argc, char const *argv[])
 
     if (!strcmp(argv[1], "snd")) {
         /* Message Send */
+        if (argc < 4) {
+            print_usage(argv[3]);
+            return -1;
+        }
+
         if (mtype <= 0) {
             print_usage(argv[2]);
             return -1;

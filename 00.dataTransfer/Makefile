@@ -4,14 +4,14 @@ INC_DIR			?=
 LIB_DIR 		?=
 
 #### Linux domain configuration
-SRCS 			?= mq_sysv.c
+SRCS 			?= mq_posix.c
 OBJS 			?= $(SRCS:%.c=%.o)
 APPS 			?= $(SRCS:%.c=%)
 
 CFLAGS 			?= -W -Wall
 CPPFLAGS 		?= -I$(INC_DIR)
 LDFLAGS 		?= -L$(LIB_DIR)
-LDLIBS 			?= -lpthread
+LDLIBS 			?= -lpthread -lrt
 LDLIBS 			+=
 
 #### General configuration
