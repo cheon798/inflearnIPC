@@ -32,6 +32,8 @@ createMsgQ(void)
     mqd_t mqd;
     struct mq_attr attr;
 
+    //printf("[CREATE SPACE] PID : %d \n", getpid());
+
     mqd = mq_open(POSIX_MQ_NAME, O_RDWR | O_CREAT, 0644, NULL);
     if (mqd == -1) {
         perror("mq_open() \n");
@@ -69,6 +71,8 @@ doSndQue(unsigned int prio, const char *msg)
 
     mqd = createMsgQ();
 
+    //printf("[SENDQ SPACE] PID : %d \n", getpid());
+
     rtn = mq_send(mqd, msg, strlen(msg), prio);
     if (rtn == -1) {
         perror("mq_send() \n");
@@ -92,6 +96,8 @@ doRcvQue(void)
     mqd_t mqd;
 
     mqd = createMsgQ();
+
+    //printf("[RECEIVEQ SPACE] PID : %d \n", getpid());
 
     rtn = mq_receive(mqd, rbuf, sizeof(rbuf), &priority);
     if (rtn == -1) {
@@ -120,6 +126,8 @@ main(int argc, char const *argv[])
         print_usage(argv[0]);
         return -1;
     }
+
+    //printf("[COMMON SPACE] PID : %d \n", getpid());
 
     if (!strcmp(argv[1], "snd")) {
         /* Message Send */
