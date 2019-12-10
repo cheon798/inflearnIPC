@@ -45,7 +45,7 @@ createMsgQ(void)
     rtn = mq_getattr(mqd, &attr);
     if (rtn == -1) {
         perror("mq_getattr() \n");
-        rtn = close(mqd);
+        rtn = mq_close(mqd);
         if (rtn == -1) {
             perror("close() \n");
             return -1;
@@ -53,7 +53,7 @@ createMsgQ(void)
         return -1;
     }
 
-#if 0
+#if 1
     printf("mq_flags   = %ld \n", attr.mq_flags);
     printf("mq_maxmsg  = %ld \n", attr.mq_maxmsg);
     printf("mq_msgsize = %ld \n", attr.mq_msgsize);
@@ -76,7 +76,7 @@ doSndQue(unsigned int prio, const char *msg)
     rtn = mq_send(mqd, msg, strlen(msg), prio);
     if (rtn == -1) {
         perror("mq_send() \n");
-        rtn = close(mqd);
+        rtn = mq_close(mqd);
         if (rtn == -1) {
             perror("close() \n");
             return -1;
@@ -102,7 +102,7 @@ doRcvQue(void)
     rtn = mq_receive(mqd, rbuf, sizeof(rbuf), &priority);
     if (rtn == -1) {
         perror("mq_receive() \n");
-        rtn = close(mqd);
+        rtn = mq_close(mqd);
         if (rtn == -1) {
             perror("close() \n");
             return -1;
