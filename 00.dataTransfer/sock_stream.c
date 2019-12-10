@@ -67,7 +67,8 @@ server(void)
     while((rbyte = recv(peer, rwbuf, sizeof(rwbuf), 0)) >= 0) {
         if (rbyte != sizeof(rwbuf)) {
             if (rbyte == 0) {
-                printf("End of message! rbyte : %ld\n", rbyte);        
+                printf("End of message! rbyte : %ld\n", rbyte);
+                break;        
             } else {
                 printf("Partial receive occur! rbyte : %ld\n", rbyte);
                 break;
