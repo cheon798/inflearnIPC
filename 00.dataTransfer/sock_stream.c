@@ -8,21 +8,24 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define SOCK_PATH   "sockStreamFile"
+#define MAX_BUF_SIZE    1024
+#define RW_BUF_SIZE     3
+#define SOCK_PATH       "sockStreamFile"
 
 static void
 print_usage(const char *idxname)
 {
-    printf("%s error. index : server[1] | client[1]).\n", idxname);
+    printf("%s error. index : server[1] | client[1] request_message [2]).\n", idxname);
 }
 
 static int
 server(void)
 {
-    int fd, openFlag, sockfd, rtn, peer;
+    int fd, openFlag, sockfd, rtn, peer, i;
     mode_t filePerms;
-    char rwbuf[7];              // receive & write buffer
-    ssize_t rbyte, wbyte;       // receive byte, write byte 
+    char rwbuf[RW_BUF_SIZE];    // receive & write buffer
+    ssize_t rbyte = 0;          // receive byte
+    ssize_t wbyte = 0;          // write byte 
     struct sockaddr_un addr;
 
     memset(rwbuf, 0x00, sizeof(rwbuf));
@@ -32,7 +35,7 @@ server(void)
     strcpy(addr.sun_path, SOCK_PATH);
 
     openFlag = O_CREAT | O_WRONLY | O_APPEND;
-    filePerms = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH; // 0666, rw_-rw_-rw_
+    filePerms = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH; // 0666, rw_-r__-r__
 
     fd = open("requestedMessage", openFlag, filePerms);
     if (fd == -1) {
@@ -64,47 +67,29 @@ server(void)
         goto err;
     }
 
-    while((rbyte = recv(peer, rwbuf, sizeof(rwbuf), 0)) >= 0) {
-        if (rbyte != sizeof(rwbuf)) {
-            if (rbyte == 0) {
-                printf("End of message! rbyte : %ld\n", rbyte);
-                break;        
-            } else {
-                printf("Partial receive occur! rbyte : %ld\n", rbyte);
-                break;
+     while ((rbyte = recv(peer, rwbuf, RW_BUF_SIZE, 0)) >= 0) {
+        /* receive request */
+        if (rbyte == 0) {                       // End of request message!
+            break; 
+        } else {                                // Partial receive! or Garbage byte occur!
+            for (i=rbyte ; i<RW_BUF_SIZE ; i++) {
+                rwbuf[i] = '\0';                // must not '\n'
             }
         }
 
-        /* write to file */
-        wbyte = write(fd, rwbuf, sizeof(rwbuf));
-        if (wbyte == -1) {
+        wbyte = write(fd, rwbuf, strlen(rwbuf));
+        if (wbyte == -1) {                      // Error case!
             perror("write() \n");
             goto file_err;
-        } else if (wbyte == 0) {
-            printf("Nothing to write! wbyte : %ld\n", wbyte);
-        } else if (wbyte > 0 && wbyte != sizeof(rwbuf)) {
-            printf("Partial write occur! wbyte : %ld\n", wbyte);
-            break;
         }
+        // } else if (wbyte == 0) {                // Nothing to write!
+        //     break;
+        // } else if (wbyte != sizeof(rwbuf)) {    // Partial write!
+        //     break;
+        // }
 
-        printf("%s\n", rwbuf);
+        printf("%s", rwbuf);
     }
-
-    // while (1) {
-    //     result = recv(peer, rbuf, sizeof(rbuf), 0);
-    //     if (result == -1) {
-    //         perror("recv() \n");
-    //         rtn = close(sockfd);
-    //         goto err;
-    //     } else if (result == 0) {
-    //         printf("Client's all requests has been received. \n");
-    //         break;
-    //     } else if (result < sizeof(rbuf)) {
-    //         printf("recv() : Partial received. \n");
-    //         goto err;
-    //     }
-    //     return -1;
-    // }
 
     rtn = close(sockfd);
     if (rtn == -1) {
@@ -143,14 +128,12 @@ file_err :
 }
 
 static int
-client(void)
+client(const char *request)
 {
     int sockfd, rtn;
-    char sbuf[511];
     ssize_t result;
     struct sockaddr_un addr;
 
-    memset(sbuf, 0x00, sizeof(sbuf));
     memset(&addr, 0x00, sizeof(struct sockaddr_un));
 
     addr.sun_family = AF_UNIX;
@@ -172,8 +155,7 @@ client(void)
         return -1;
     }
 
-    snprintf(sbuf, sizeof(sbuf), "This is a request message from sock_stream!!!\n");
-    result = send(sockfd, sbuf, sizeof(sbuf), 0);
+    result = send(sockfd, request, strlen(request), 0);
 
     rtn = close(sockfd);
     if (rtn == -1) {
@@ -188,6 +170,9 @@ int
 main(int argc, char const *argv[])
 {
     int rtn;
+    char rqbuf[MAX_BUF_SIZE];
+
+    memset(rqbuf, 0x00 , sizeof(rqbuf));
 
     if (argc < 2) {
         print_usage(argv[0]);
@@ -204,13 +189,24 @@ main(int argc, char const *argv[])
 
     } else if (!strcmp(argv[1], "client")) {
         /* client */
-        client();
+        if (argc <3) {
+            print_usage(argv[2]);
+            return -1;
+        }
+
+        strcpy(rqbuf, argv[2]);
+
+        rtn = client(rqbuf);
+        if (rtn == -1) {
+            perror("client() \n");
+            return -1;
+        }
 
     } else {
         /* error case */
         print_usage(argv[1]);
         return -1;
     }
-    
+     
     return 0;
 }
