@@ -35,7 +35,7 @@ server(void)
     strcpy(addr.sun_path, SOCK_PATH);
 
     openFlag = O_CREAT | O_WRONLY | O_APPEND;
-    filePerms = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH; // 0666, rw_-r__-r__
+    filePerms = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH; // 0644, rw_-r__-r__
 
     fd = open("requestedMessage", openFlag, filePerms);
     if (fd == -1) {
