@@ -12,14 +12,64 @@
 #define RW_BUF_SIZE     3
 #define SOCK_PATH       "sockStreamFile"
 
+static void printUsage(const char *idxname);
+static int tcpServ(void);
+static int tcpClie(const char *request);
+
+int 
+main(int argc, char const *argv[])
+{
+    int rtn;
+    char rqbuf[MAX_BUF_SIZE];
+
+    memset(rqbuf, 0x00 , sizeof(rqbuf));
+
+    if (argc < 2) {
+        printUsage(argv[0]);
+        return -1;
+    }
+
+    if (!strcmp(argv[1], "server")) {
+        /* server */
+        rtn = tcpServ();
+        if (rtn == -1) {
+            perror("tcpServ() \n");
+            return -1;
+        }
+
+    } else if (!strcmp(argv[1], "client")) {
+        /* client */
+        if (argc <3) {
+            printUsage(argv[2]);
+            return -1;
+        }
+
+        strcpy(rqbuf, argv[2]);
+
+        rtn = tcpClie(rqbuf);
+        if (rtn == -1) {
+            perror("tcpClie() \n");
+            return -1;
+        }
+
+    } else {
+        /* error case */
+        printUsage(argv[1]);
+        return -1;
+    }
+     
+    return 0;
+}
+
+
 static void
-print_usage(const char *idxname)
+printUsage(const char *idxname)
 {
     printf("%s error. index : server[1] | client[1] request_message [2]).\n", idxname);
 }
 
 static int
-server(void)
+tcpServ(void)
 {
     int fd, openFlag, sockfd, rtn, peer, i;
     mode_t filePerms;
@@ -49,11 +99,15 @@ server(void)
         return -1;
     }
 
+    printf("After socket() \n");
+
     rtn = bind(sockfd, (struct sockaddr *)&addr, sizeof(struct sockaddr_un));
     if (rtn == -1) {
         perror("bind() \n");
         goto err;
     }
+
+    printf("After bind() \n");
 
     rtn = listen(sockfd, 5);
     if (rtn == -1) {
@@ -61,11 +115,15 @@ server(void)
         goto err;
     }
 
+    printf("After listen() \n");
+
     peer = accept(sockfd, NULL, NULL);
     if (peer < 0) {
         perror("accept() \n");
         goto err;
     }
+
+    printf("After accept() \n");
 
      while ((rbyte = recv(peer, rwbuf, RW_BUF_SIZE, 0)) >= 0) {
         /* receive request */
@@ -128,7 +186,7 @@ file_err :
 }
 
 static int
-client(const char *request)
+tcpClie(const char *request)
 {
     int sockfd, rtn;
     ssize_t result;
@@ -145,6 +203,8 @@ client(const char *request)
         return -1;
     }
 
+    printf("After socket() \n");
+
     rtn = connect(sockfd, (struct sockaddr *)&addr, sizeof(struct sockaddr_un));
     if (rtn == -1) {
         perror("bind() \n");
@@ -155,6 +215,8 @@ client(const char *request)
         return -1;
     }
 
+    printf("After connect() \n");
+
     result = send(sockfd, request, strlen(request), 0);
 
     rtn = close(sockfd);
@@ -163,50 +225,5 @@ client(const char *request)
         return -1;
     }
 
-    return 0;
-}
-
-int 
-main(int argc, char const *argv[])
-{
-    int rtn;
-    char rqbuf[MAX_BUF_SIZE];
-
-    memset(rqbuf, 0x00 , sizeof(rqbuf));
-
-    if (argc < 2) {
-        print_usage(argv[0]);
-        return -1;
-    }
-
-    if (!strcmp(argv[1], "server")) {
-        /* server */
-        rtn = server();
-        if (rtn == -1) {
-            perror("server() \n");
-            return -1;
-        }
-
-    } else if (!strcmp(argv[1], "client")) {
-        /* client */
-        if (argc <3) {
-            print_usage(argv[2]);
-            return -1;
-        }
-
-        strcpy(rqbuf, argv[2]);
-
-        rtn = client(rqbuf);
-        if (rtn == -1) {
-            perror("client() \n");
-            return -1;
-        }
-
-    } else {
-        /* error case */
-        print_usage(argv[1]);
-        return -1;
-    }
-     
     return 0;
 }
