@@ -30,7 +30,7 @@ doWrite(const char *message)
     printf("After open(), filedescripter : %d\n", fd);
  
     rtn = write(fd, message, strlen(message));
-    if (rtn = -1 && (strcmp(strerror(errno), "Success"))) {
+    if (rtn = -1) {
         perror("write() fail!\n");
         printf("errno is %s \n", strerror(errno));
         rtn = close(fd);
@@ -68,7 +68,7 @@ doRead(void)
     printf("After open(), filedescripter : %d\n", fd);
 
     rtn = read(fd, rbuf, sizeof(rbuf));
-    if (rtn = -1 && (strcmp(strerror(errno), "Success"))) {
+    if (rtn = -1) {
         perror("read() fail!\n");
         printf("errno is %s \n", strerror(errno));
         rtn = close(fd);
@@ -95,26 +95,18 @@ doRead(void)
 int 
 main(int argc, char const *argv[])
 {
-    int fd, rtn;
+    int rtn;
     char wbuf[1024];
-    char rbuf[1024];
 
     memset(wbuf, 0x00, sizeof(wbuf));
-    memset(rbuf, 0x00, sizeof(rbuf));
 
     if (argc < 2) {
         print_usage(argv[0]);
         return -1;
     }
 
-    if (!strcmp(argv[1], "r")) {
+    if (!strcmp(argv[1], "r")) {		// 두 문자열이 같으면 0, 첫 번째 문자열이 크면 1, 두 번째 문자열이 크면 -1
         /* read */
-     
-        strcpy(rbuf, argv[2]);
-        printf("rbuf : %s \n", rbuf);
-        printf("size of rbuf is %ld \n", strlen(rbuf));
-        printf("size of rbuf is %ld \n", sizeof(rbuf));
-        printf("size of argv[2] is %ld \n", sizeof(argv[2]));
      
         rtn = doRead();
         if (rtn == -1) {
@@ -124,16 +116,16 @@ main(int argc, char const *argv[])
     } else if (!strcmp(argv[1], "w")) {
         /* write */
      
-        rtn = unlink(FIFO_FILENAME);
-        if (rtn == -1) {
+        rtn = unlink(FIFO_FILENAME);	// 파일을 삭제하는 system call, 정확히 hard link의 이름을 삭제하고 hard link가 참조하는 count를 1 감소시킴
+        /*if (rtn == -1) {
             perror("unlink() \n");
             printf("errno is %s \n", strerror(errno));
             return -1;
-        }
+        }*/
 
         printf("After unlink() \n");
 
-        rtn = mkfifo(FIFO_FILENAME, 0644);
+        rtn = mkfifo(FIFO_FILENAME, 0644);	// pathname의 이름과 mode permission을 갖는 named pipe 생성
         if (rtn == -1) {
             perror("mkfifo() fail!\n");
             return -1;
@@ -143,7 +135,7 @@ main(int argc, char const *argv[])
 
         strcpy(wbuf, argv[2]);
         printf("wbuf : %s \n", wbuf);
-        printf("size of wbuf is %ld \n", strlen(wbuf));
+        printf("string length of wbuf is %ld \n", strlen(wbuf));
         printf("size of wbuf is %ld \n", sizeof(wbuf));
         printf("size of argv[2] is %ld \n", sizeof(argv[2]));
 
